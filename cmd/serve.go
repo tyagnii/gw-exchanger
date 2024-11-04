@@ -11,7 +11,6 @@ import (
 	"github.com/tyagnii/gw-exchanger/internal/db"
 	"github.com/tyagnii/gw-exchanger/internal/server"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 
 	"os"
@@ -49,7 +48,7 @@ to quickly create a Cobra application.`,
 		// Listener configuration for gRPC connection
 		tcpListen, err := net.Listen("tcp", addr)
 		if err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
 
 		// Create new gRPC server to handle services
