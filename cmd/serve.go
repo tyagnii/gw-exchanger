@@ -5,10 +5,10 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"github.com/tyagnii/gw-exchanger/config"
 	"github.com/tyagnii/gw-exchanger/gen/exchanger/v1"
 	"github.com/tyagnii/gw-exchanger/internal/db"
+	"github.com/tyagnii/gw-exchanger/internal/logger"
 	"github.com/tyagnii/gw-exchanger/internal/server"
 	"google.golang.org/grpc"
 	"net"
@@ -17,6 +17,8 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+var configFile = "config.env"
 
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
@@ -29,25 +31,35 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called")
-
-		if err := config.ReadConfig("config.env"); err != nil {
-			panic(err)
-		}
-
-		// fetch server address string
-		addr := os.Getenv("EXCHANGE_SEVER_ADDRESS_STRING")
-
-		// create db connection
-		dbconn, err := db.NewPGConnector(context.Background(), "")
+		// Init Logger
+		sLogger, err := logger.NewSugaredLogger()
 		if err != nil {
 			panic(err)
 		}
-		exchangeServer := server.NewExchangeServer(dbconn, addr)
+
+		// Read configuration from env file to os environment variables
+		if err := config.ReadConfig(configFile); err != nil {
+			sLogger.DPanicf("Configuration file not found: %s", configFile)
+			panic(err)
+		}
+
+		// Fetch server address string
+		addr := os.Getenv("EXCHANGE_SEVER_ADDRESS_STRING")
+
+		// Create db connection
+		dbconn, err := db.NewPGConnector(context.Background(), "")
+		if err != nil {
+			sLogger.DPanicf("Error connecting to database: %v", err)
+			panic(err)
+		}
+
+		// Create Exchanger Server instance
+		exchangeServer := server.NewExchangeServer(dbconn, addr, sLogger)
 
 		// Listener configuration for gRPC connection
 		tcpListen, err := net.Listen("tcp", addr)
 		if err != nil {
+			sLogger.DPanicf("Error listening on %s: %v", addr, err)
 			panic(err)
 		}
 
@@ -57,7 +69,8 @@ to quickly create a Cobra application.`,
 		// Register service on gRPC server
 		exchanger.RegisterExchangeServiceServer(grpcServer, exchangeServer)
 
-		grpcServer.Serve(tcpListen)
+		// Run gRPC server
+		sLogger.Error(grpcServer.Serve(tcpListen))
 
 	},
 }
