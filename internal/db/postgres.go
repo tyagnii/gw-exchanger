@@ -19,17 +19,59 @@ func NewPGConnector(ctx context.Context, connectionString string) (*PGConnector,
 	return &PGConnector{PGConn: conn, ctx: ctx}, nil
 }
 
-func (P *PGConnector) SaveRates(ctx context.Context, rates models.Rates) error {
+func (P *PGConnector) SaveRates(ctx context.Context, rates []models.Rate) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (P *PGConnector) GetRates(ctx context.Context) ([]models.Rates, error) {
-	//TODO implement me
-	panic("implement me")
+func (P *PGConnector) GetRates(ctx context.Context) ([]models.Rate, error) {
+	var rates = []models.Rate{}
+
+	rows, err := P.PGConn.Query(
+		ctx,
+		`SELECT * FROM rates`,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var rate models.Rate
+		err := rows.Scan(&rate)
+		if err != nil {
+			return nil, err
+		}
+		rates = append(rates, rate)
+	}
+
+	return rates, nil
 }
 
-func (P *PGConnector) GetCurrencyRate(ctx context.Context, rate models.CurrencyRate) (models.CurrencyRateResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (P *PGConnector) GetCurrencyRate(
+	ctx context.Context,
+	rateReq models.CurrencyRate,
+) (models.CurrencyRateResponse, error) {
+	var curRatResp = models.CurrencyRateResponse{}
+	rows, err := P.PGConn.Query(
+		ctx,
+		`SELECT * FROM rates
+			WHERE name = $1 OR name = $2`,
+		rateReq.ToCurrency, rateReq.FromCurrency)
+	if err != nil {
+		return curRatResp, err
+	}
+
+	var rates map[string]models.Rate
+	for rows.Next() {
+		var rate models.Rate
+		err := rows.Scan(&rate)
+		if err != nil {
+			return curRatResp, err
+		}
+		rates[rate.Name] = rate
+	}
+
+	curRatResp.Rate = rates[rateReq.FromCurrency].Rate / rates[rateReq.ToCurrency].Rate
+
+	return curRatResp, nil
 }

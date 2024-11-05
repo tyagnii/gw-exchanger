@@ -1,9 +1,9 @@
 package models
 
-type Rates struct {
-	USD float64 `json:"USD"`
-	RUB float64 `json:"RUB"`
-	EUR float64 `json:"EUR"`
+type Rate struct {
+	ID   int     `json:"id"`
+	Name string  `json:"name"`
+	Rate float32 `json:"rate"`
 }
 
 type CurrencyRate struct {
