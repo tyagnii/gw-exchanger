@@ -12,6 +12,7 @@ import (
 	"github.com/tyagnii/gw-exchanger/internal/server"
 	"google.golang.org/grpc"
 	"net"
+	"time"
 
 	"os"
 
@@ -47,14 +48,20 @@ to quickly create a Cobra application.`,
 		addr := os.Getenv("EXCHANGE_SEVER_ADDRESS_STRING")
 
 		// Create db connection
-		dbconn, err := db.NewPGConnector(context.Background(), "")
-		if err != nil {
-			sLogger.DPanicf("Error connecting to database: %v", err)
-			panic(err)
+		// todo: build connectionString
+		var DBconn *db.PGConnector
+		for {
+			var err error
+			DBconn, err = db.NewPGConnector(context.Background(),
+				"postgres://postgres:password@db:5432/postgres?sslmode=disable")
+			if err != nil {
+				sLogger.Errorf("Error connecting to database: %v", err)
+			}
+			time.Sleep(5 * time.Second)
 		}
 
 		// Create Exchanger Server instance
-		exchangeServer := server.NewExchangeServer(dbconn, addr, sLogger)
+		exchangeServer := server.NewExchangeServer(DBconn, addr, sLogger)
 
 		// Listener configuration for gRPC connection
 		tcpListen, err := net.Listen("tcp", addr)
