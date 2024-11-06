@@ -58,13 +58,16 @@ to quickly create a Cobra application.`,
 			if err != nil {
 				sLogger.Errorf("Error connecting to database: %v", err)
 			} else {
+				sLogger.Debugf("Connected to database. Breaking loop")
 				break
 			}
+			sLogger.Debugf("Waiting 5 sec")
 			time.Sleep(5 * time.Second)
 		}
 
 		// Create Exchanger Server instance
 		exchangeServer := server.NewExchangeServer(DBconn, addr, sLogger)
+		sLogger.Debugf("Created exchange server")
 
 		// Listener configuration for gRPC connection
 		tcpListen, err := net.Listen("tcp", addr)
