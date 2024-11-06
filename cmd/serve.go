@@ -32,6 +32,16 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		var ctx context.Context = context.Background()
+		var startUpTimeout time.Duration
+		var DBConn db.DBConnector
+
+		// Fetch startUpTimeout
+		startUpTimeout, err := time.ParseDuration(os.Getenv("START_UP_TIMEOUT"))
+		if err != nil {
+			startUpTimeout = 30 * time.Second
+		}
+
 		// Init Logger
 		sLogger, err := logger.NewSugaredLogger()
 		if err != nil {
@@ -41,32 +51,23 @@ to quickly create a Cobra application.`,
 		// Read configuration from env file to os environment variables
 		if err := config.ReadConfig(configFile); err != nil {
 			sLogger.DPanicf("Configuration file not found: %s", configFile)
-			panic(err)
+			os.Exit(1)
 		}
 
 		// Fetch server address string
 		addr := os.Getenv("EXCHANGE_SEVER_ADDRESS_STRING")
 
-		// Create db connection
-		// todo: build connectionString
-		var DBconn *db.PGConnector
-		ConnString := config.BuildConnString()
-		for {
-			var err error
-
-			DBconn, err = db.NewPGConnector(context.Background(), ConnString)
-			if err != nil {
-				sLogger.Errorf("Error connecting to database: %v", err)
-			} else {
-				sLogger.Debugf("Connected to database. Breaking loop")
-				break
-			}
-			sLogger.Debugf("Waiting 5 sec")
-			time.Sleep(5 * time.Second)
+		// Create dbconnection
+		ctx, _ = context.WithTimeout(ctx, startUpTimeout)
+		connString := config.BuildConnString()
+		DBConn, err = db.NewPGConnector(ctx, connString, sLogger)
+		if err != nil {
+			sLogger.DPanicf("Database connection error: %s", err.Error())
+			os.Exit(1)
 		}
 
 		// Create Exchanger Server instance
-		exchangeServer := server.NewExchangeServer(DBconn, addr, sLogger)
+		exchangeServer := server.NewExchangeServer(DBConn, addr, sLogger)
 		sLogger.Debugf("Created exchange server")
 
 		// Listener configuration for gRPC connection
