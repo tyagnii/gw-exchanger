@@ -70,7 +70,7 @@ to quickly create a Cobra application.`,
 		exchanger.RegisterExchangeServiceServer(grpcServer, exchangeServer)
 
 		// Run gRPC server
-		sLogger.Error(grpcServer.Serve(tcpListen))
+		grpcServer.Serve(tcpListen)
 
 	},
 }
