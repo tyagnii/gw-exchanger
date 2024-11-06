@@ -12,6 +12,7 @@ func NewSugaredLogger() (*zap.SugaredLogger, error) {
 	config.EncoderConfig.TimeKey = "time"
 	config.EncoderConfig.CallerKey = "caller"
 	config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 
 	logger, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
