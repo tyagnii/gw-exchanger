@@ -56,6 +56,8 @@ to quickly create a Cobra application.`,
 				"postgres://postgres:password@db:5432/postgres?sslmode=disable")
 			if err != nil {
 				sLogger.Errorf("Error connecting to database: %v", err)
+			} else {
+				break
 			}
 			time.Sleep(5 * time.Second)
 		}
