@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/tyagnii/gw-exchanger/config"
 	"github.com/tyagnii/gw-exchanger/gen/exchanger/v1"
 	"github.com/tyagnii/gw-exchanger/internal/db"
@@ -50,11 +51,13 @@ to quickly create a Cobra application.`,
 		// Create db connection
 		// todo: build connectionString
 		var DBconn *db.PGConnector
+		ConnString := config.BuildConnString()
 		for {
 			var err error
-			DBconn, err = db.NewPGConnector(context.Background(),
-				"postgres://postgres:password@db:5432/postgres?sslmode=disable")
+
+			DBconn, err = db.NewPGConnector(context.Background(), ConnString)
 			if err != nil {
+				fmt.Println(err)
 				sLogger.Errorf("Error connecting to database: %v", err)
 			} else {
 				break
