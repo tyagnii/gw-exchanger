@@ -60,6 +60,7 @@ to quickly create a Cobra application.`,
 		// Create dbconnection
 		ctx, cancel := context.WithTimeout(ctx, startUpTimeout)
 		defer cancel()
+
 		connString := config.BuildConnString()
 		DBConn, err = db.NewPGConnector(ctx, connString, sLogger)
 		if err != nil {
