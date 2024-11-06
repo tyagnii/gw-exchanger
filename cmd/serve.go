@@ -58,7 +58,8 @@ to quickly create a Cobra application.`,
 		addr := os.Getenv("EXCHANGE_SEVER_ADDRESS_STRING")
 
 		// Create dbconnection
-		ctx, _ = context.WithTimeout(ctx, startUpTimeout)
+		ctx, cancel := context.WithTimeout(ctx, startUpTimeout)
+		defer cancel()
 		connString := config.BuildConnString()
 		DBConn, err = db.NewPGConnector(ctx, connString, sLogger)
 		if err != nil {

@@ -25,7 +25,7 @@ func NewPGConnector(ctx context.Context, connectionString string, sLogger *zap.S
 				sLogger.Errorf("Error connecting to database: %v", err)
 			} else {
 				sLogger.Debugf("Connected to database. Breaking loop")
-
+				break
 			}
 
 			switch ctx.Err() {
