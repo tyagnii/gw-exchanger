@@ -6,10 +6,11 @@ package cmd
 import (
 	"context"
 	"github.com/tyagnii/gw-exchanger/config"
-	"github.com/tyagnii/gw-exchanger/gen/exchanger/v1"
 	"github.com/tyagnii/gw-exchanger/internal/db"
 	"github.com/tyagnii/gw-exchanger/internal/logger"
 	"github.com/tyagnii/gw-exchanger/internal/server"
+	"github.com/tyagnii/gw-proto/gen/exchanger/v1"
+
 	"google.golang.org/grpc"
 	"net"
 	"time"

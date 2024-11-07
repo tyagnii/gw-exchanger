@@ -2,9 +2,9 @@ package server
 
 import (
 	"context"
-	"github.com/tyagnii/gw-exchanger/gen/exchanger/v1"
 	"github.com/tyagnii/gw-exchanger/internal/db"
 	"github.com/tyagnii/gw-exchanger/internal/models"
+	"github.com/tyagnii/gw-proto/gen/exchanger/v1"
 
 	"go.uber.org/zap"
 )
