@@ -3,7 +3,7 @@ package models
 type Rate struct {
 	ID   int     `json:"id"`
 	Name string  `json:"name"`
-	Rate float32 `json:"rate"`
+	Rate float64 `json:"rate"`
 }
 
 type CurrencyRate struct {
@@ -12,5 +12,5 @@ type CurrencyRate struct {
 }
 
 type CurrencyRateResponse struct {
-	Rate float32 `json:"rate"`
+	Rate float64 `json:"rate"`
 }

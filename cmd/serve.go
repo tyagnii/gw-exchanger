@@ -12,6 +12,7 @@ import (
 	"github.com/tyagnii/gw-exchanger/internal/server"
 	"google.golang.org/grpc"
 	"net"
+	"time"
 
 	"os"
 
@@ -31,6 +32,16 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		var ctx context.Context = context.Background()
+		var startUpTimeout time.Duration
+		var DBConn db.DBConnector
+
+		// Fetch startUpTimeout
+		startUpTimeout, err := time.ParseDuration(os.Getenv("START_UP_TIMEOUT"))
+		if err != nil {
+			startUpTimeout = 30 * time.Second
+		}
+
 		// Init Logger
 		sLogger, err := logger.NewSugaredLogger()
 		if err != nil {
@@ -40,21 +51,26 @@ to quickly create a Cobra application.`,
 		// Read configuration from env file to os environment variables
 		if err := config.ReadConfig(configFile); err != nil {
 			sLogger.DPanicf("Configuration file not found: %s", configFile)
-			panic(err)
+			os.Exit(1)
 		}
 
 		// Fetch server address string
 		addr := os.Getenv("EXCHANGE_SEVER_ADDRESS_STRING")
 
-		// Create db connection
-		dbconn, err := db.NewPGConnector(context.Background(), "")
+		// Create dbconnection
+		ctx, cancel := context.WithTimeout(ctx, startUpTimeout)
+		defer cancel()
+
+		connString := config.BuildConnString()
+		DBConn, err = db.NewPGConnector(ctx, connString, sLogger)
 		if err != nil {
-			sLogger.DPanicf("Error connecting to database: %v", err)
-			panic(err)
+			sLogger.DPanicf("Database connection error: %s", err.Error())
+			os.Exit(1)
 		}
 
 		// Create Exchanger Server instance
-		exchangeServer := server.NewExchangeServer(dbconn, addr, sLogger)
+		exchangeServer := server.NewExchangeServer(DBConn, addr, sLogger)
+		sLogger.Debugf("Created exchange server")
 
 		// Listener configuration for gRPC connection
 		tcpListen, err := net.Listen("tcp", addr)
@@ -70,7 +86,7 @@ to quickly create a Cobra application.`,
 		exchanger.RegisterExchangeServiceServer(grpcServer, exchangeServer)
 
 		// Run gRPC server
-		sLogger.Error(grpcServer.Serve(tcpListen))
+		grpcServer.Serve(tcpListen)
 
 	},
 }
