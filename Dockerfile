@@ -1,4 +1,4 @@
-FROM golang:1.23.2
+FROM golang:1.23.2 as build
 
 WORKDIR /usr/gw-exchanger
 
@@ -8,5 +8,10 @@ RUN go mod download && go mod verify
 COPY . .
 RUN make build
 
-# CMD ["./bin/server", "serve"]
+FROM scratch
+WORKDIR /
+COPY --from=build /usr/gw-exchanger/bin/server /
+COPY --from=build /usr/gw-exchanger/config.env /
+
+CMD ["/server", "serve"]
 
